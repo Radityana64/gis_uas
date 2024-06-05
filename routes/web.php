@@ -20,7 +20,7 @@ Route::get('/RuasJalan', [RuasJalanController::class, 'index'])->name('RuasJalan
 Route::get('/RuasJalan/create', [RuasJalanController::class, 'create'])->name('RuasJalan.create');
 Route::post('/RuasJalan/store', [RuasJalanController::class, 'store'])->name('RuasJalan.store');
 Route::get('/RuasJalan/edit', [RuasJalanController::class, 'edit'])->name('RuasJalan.edit');
-
+Route::delete('/RuasJalan/{id}', [RuasJalanController::class, 'destroy'])->name('RuasJalan.destroy');
 
 
 // Route controller untuk otentikasi
@@ -41,6 +41,8 @@ Route::controller(AuthController::class)->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
 });
+
+Route::middleware('auth:api')->get('/ruasjalan', [RuasJalanController::class, 'index']);
 
 
 

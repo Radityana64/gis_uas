@@ -56,7 +56,7 @@
         </div>
         
         <div class="custom-card-body">
-            <form enctype="multipart/form-data">
+            <form action="{{ route('RuasJalan.store') }}" method="POST" enctype="multipart/form-data" id="form" name="form">
                 @csrf
                 <div class="space-y-4">
                     <div class="form-control">
@@ -149,6 +149,13 @@
                         </label>
                         <input type="text" class="input input-bordered w-full border-gray-300 rounded-lg shadow-sm" id="keterangan" name="keterangan" required />
                     </div>
+
+                    <div class="form-control">
+                        <label class="label" for="latlng">
+                            <span class="label-text text-gray-700"><b>Latlng</b></span>
+                        </label>
+                        <input type="text" class="input input-bordered w-full border-gray-300 rounded-lg shadow-sm" id="latlng" name="latlng" required />
+                    </div>
                     
                     <button type="submit" class="btn btn-primary w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg">Tambah Jalan</button>
                 </div>
@@ -161,12 +168,93 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.0.2/dist/leaflet.geometryutil.min.js"></script>
+
 <script>
+    // Fungsi untuk menghitung panjang garis polyline
+    function calculateLength(latlngs) {
+        let length = 0;
+        for (let i = 0; i < latlngs.length - 1; i++) {
+            length += latlngs[i].distanceTo(latlngs[i + 1]);
+        }
+        return length;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        var map = L.map('map').setView([-8.65, 115.22], 10); // Contoh koordinat untuk Bali
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+        var map = L.map('map').setView([-8.65, 115.22], 10);
+        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
+
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            },
+            draw: {
+                polyline: true,
+                polygon: true,
+                circle: false,
+                rectangle: false,
+                marker: false,
+                circlemarker: false
+            }
+        });
+        map.addControl(drawControl);
+
+        map.on(L.Draw.Event.CREATED, function (event) {
+            var layer = event.layer;
+            drawnItems.addLayer(layer);
+
+            var latlngs;
+            if (layer instanceof L.Polyline) {
+                latlngs = layer.getLatLngs();
+            } else if (layer instanceof L.Polygon) {
+                latlngs = layer.getLatLngs()[0]; // outer ring
+            }
+
+            var latlngString = latlngs.map(function(latlng) {
+                return `${latlng.lat},${latlng.lng}`;
+            }).join(' ');
+
+            document.getElementById('latlng').value = latlngString;
+
+            // Calculate the length of the polyline
+            var length = calculateLength(latlngs);
+            console.log('Length:', length);
+
+            alert(`Panjang Polyline: ${length.toFixed(2)} meters`);
+        });
+
+        map.on(L.Draw.Event.EDITED, function (event) {
+            var layers = event.layers;
+            var latlngs = [];
+
+            layers.eachLayer(function (layer) {
+                if (layer instanceof L.Polyline) {
+                    latlngs = latlngs.concat(layer.getLatLngs());
+                } else if (layer instanceof L.Polygon) {
+                    latlngs = latlngs.concat(layer.getLatLngs()[0]); // outer ring
+                }
+            });
+
+            var latlngString = latlngs.map(function(latlng) {
+                return `${latlng.lat},${latlng.lng}`;
+            }).join(' ');
+
+            document.getElementById('latlng').value = latlngString;
+
+            // Calculate the length of the polyline
+            var length = calculateLength(latlngs);
+            console.log('Length:', length);
+
+            alert(`Panjang Polyline: ${length.toFixed(2)} meters`);
+        });
 
         const token = document.querySelector('meta[name="api-token"]').getAttribute('content');
 
@@ -274,7 +362,128 @@
                 });
             }
         });
+
+        const eksistingSelect = document.getElementById('eksisting');
+        fetch('https://gisapis.manpits.xyz/api/meksisting', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            eksistingSelect.innerHTML = '<option value="">Pilih Material</option>';
+            data.eksisting.forEach(eksisting => {
+                const option = document.createElement('option');
+                option.value = eksisting.id;
+                option.textContent = eksisting.eksisting;
+                eksistingSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching Material:', error);
+        });
+
+        const kondisiSelect = document.getElementById('kondisi');
+        fetch('https://gisapis.manpits.xyz/api/mkondisi', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            kondisiSelect.innerHTML = '<option value="">Pilih Kondisi</option>';
+           
+            data.eksisting.forEach(kondisi => {
+                const option = document.createElement('option');
+                option.value = kondisi.id;
+                option.textContent = kondisi.kondisi;
+                kondisiSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching Kondisi:', error);
+        });
+        
+        const jenisjalanSelect = document.getElementById('jenis_jalan');
+        fetch('https://gisapis.manpits.xyz/api/mjenisjalan', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            jenisjalanSelect.innerHTML = '<option value="">Pilih Jenis</option>';
+            data.eksisting.forEach(jenisjalan => {
+                const option = document.createElement('option');
+                option.value = jenisjalan.id;
+                option.textContent = jenisjalan.jenisjalan;
+                jenisjalanSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching jenis_jalan:', error);
+        });
+
+        document.getElementById('form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Mencegah formulir dikirimkan secara langsung
+
+            // Mengumpulkan data dari formulir
+            const formData = {
+                paths: document.getElementById('latlng').value,
+                desa_id: document.getElementById('desa').value,
+                kode_ruas: document.getElementById('kode_ruas').value,
+                nama_ruas: document.getElementById('nama_ruas').value,
+                panjang: calculateLength(drawnItems.getLayers()[0].getLatLngs()), // Menggunakan fungsi calculateLength untuk menghitung panjang
+                lebar: parseFloat(document.getElementById('lebar').value),
+                eksisting_id: parseInt(document.getElementById('eksisting').value),
+                kondisi_id: parseInt(document.getElementById('kondisi').value),
+                jenisjalan_id: parseInt(document.getElementById('jenis_jalan').value),
+                keterangan: document.getElementById('keterangan').value
+            };
+
+            console.log('Form data to be sent:', formData);
+
+            const token = document.querySelector('meta[name="api-token"]').getAttribute('content');
+
+            // Membuat permintaan HTTP POST ke API
+            fetch('https://gisapis.manpits.xyz/api/ruasjalan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                console.log('Raw response:', response);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json().then(data => ({ status: response.status, body: data }));
+            })
+            .then(({ status, body }) => {
+                if (status !== 200) {
+                    console.error('Error data:', body);
+                    throw new Error(body.message || 'Gagal menyimpan data.');
+                }
+                console.log('Data berhasil disimpan:', body);
+                alert('Data berhasil disimpan.');
+
+                window.location.href = "{{ route('RuasJalan.index') }}";
+            })
+            .catch(error => {
+                console.error('Terjadi kesalahan:', error);
+                if (error.message.includes('Unexpected token')) {
+                    console.error('Respons API tidak valid:', error.message);
+                } else if (error.message.includes('HTTP error')) {
+                    console.error('Server mengembalikan status error:', error.message);
+                }
+                alert(`Terjadi kesalahan: ${error.message}`);
+            });
+        });
+
     });
 </script>
+
 </body>
 </html>
