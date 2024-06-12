@@ -17,11 +17,16 @@ Route::get('/dashboard', function () {
 
 // Rute untuk RuasJalan
 Route::get('/RuasJalan', [RuasJalanController::class, 'index'])->name('RuasJalan.index');
+
 Route::get('/RuasJalan/create', [RuasJalanController::class, 'create'])->name('RuasJalan.create');
 Route::post('/RuasJalan/store', [RuasJalanController::class, 'store'])->name('RuasJalan.store');
-Route::get('/RuasJalan/edit', [RuasJalanController::class, 'edit'])->name('RuasJalan.edit');
+
+Route::get('/ruasjalan/{id}/edit', [RuasJalanController::class, 'edit'])->name('RuasJalan.edit');
+Route::put('/ruasjalan/{id}', [RuasJalanController::class, 'update'])->name('RuasJalan.update');
+
 Route::delete('/RuasJalan/{id}', [RuasJalanController::class, 'destroy'])->name('RuasJalan.destroy');
 
+// Route::resource('RuasJalan', RuasJalanController::class);
 
 // Route controller untuk otentikasi
 Route::controller(AuthController::class)->group(function () {
