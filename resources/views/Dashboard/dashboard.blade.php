@@ -192,7 +192,7 @@
                     return; // Skip invalid coordinates
                 }
 
-                const line = L.polyline(coordinates, { color: 'red' }).addTo(map);
+                const line = L.polyline(coordinates, { color: 'blue' }).addTo(map);
             });
         }
         

@@ -197,7 +197,7 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.0.2/dist/leaflet.geometryutil.min.js"></script>
 
 <script>
-        // Fungsi untuk menghitung panjang garis polyline
+    // Fungsi untuk menghitung panjang garis polyline
     function calculateLength(latlngs) {
         let length = 0;
         for (let i = 0; i < latlngs.length - 1; i++) {
@@ -205,94 +205,89 @@
         }
         return length;
     }
-        var map = L.map('map').setView([-8.65, 115.22], 10);
-        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 20,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
 
-        var drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
+    var map = L.map('map').setView([-8.65, 115.22], 10);
+    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 20,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-        var drawControl = new L.Control.Draw({
-            edit: {
-                featureGroup: drawnItems
-            },
-            draw: {
-                polyline: true,
-                polygon: true,
-                circle: false,
-                rectangle: false,
-                marker: false,
-                circlemarker: false
-            }
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    var drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: drawnItems
+        },
+        draw: {
+            polyline: true,
+            polygon: false,
+            circle: false,
+            rectangle: false,
+            marker: false,
+            circlemarker: false
+        }
+    });
+    map.addControl(drawControl);
+
+    function updateLatLngInput(layer) {
+        var latlngs = layer.getLatLngs();
+        var latlngString = latlngs.map(function(latlng) {
+            return `${latlng.lat},${latlng.lng}`;
+        }).join(' ');
+
+        document.getElementById('latlng').value = latlngString;
+
+        var length = calculateLength(latlngs);
+        console.log('Length:', length);
+        alert(`Panjang Polyline: ${length.toFixed(2)} meters`);
+    }
+
+    map.on(L.Draw.Event.CREATED, function (event) {
+        var layer = event.layer;
+        updateLatLngInput(layer);
+        drawnItems.addLayer(layer);
+    });
+
+    map.on(L.Draw.Event.EDITED, function (event) {
+        var layers = event.layers;
+        layers.eachLayer(function (layer) {
+            updateLatLngInput(layer);
         });
-        map.addControl(drawControl);
+    });
 
-        map.on(L.Draw.Event.CREATED, function (event) {
-            var layer = event.layer;
-            drawnItems.addLayer(layer);
+    // Assuming polylineData is the string of coordinates from your server
+    var polylineData = "{{ $ruasjalan['paths'] }}";
+    
+    // Convert the string of coordinates into an array of LatLng objects
+    var polylineLatLngs = polylineData.split(' ').map(function(coords) {
+        var latlng = coords.split(',');
+        return L.latLng(parseFloat(latlng[0]), parseFloat(latlng[1]));
+    });
 
-            var latlngs;
-            if (layer instanceof L.Polyline) {
-                latlngs = layer.getLatLngs();
-            } else if (layer instanceof L.Polygon) {
-                latlngs = layer.getLatLngs()[0]; // outer ring
-            }
-
-            var latlngString = latlngs.map(function(latlng) {
-                return `${latlng.lat},${latlng.lng}`;
-            }).join(' ');
-
-            document.getElementById('latlng').value = latlngString;
-
-            // Calculate the length of the polyline
-            var length = calculateLength(latlngs);
-            console.log('Length:', length);
-
-            alert(`Panjang Polyline: ${length.toFixed(2)} meters`);
-        });
-
-        map.on(L.Draw.Event.EDITED, function (event) {
-            var layers = event.layers;
-            var latlngs = [];
-
-            layers.eachLayer(function (layer) {
-                if (layer instanceof L.Polyline) {
-                    latlngs = latlngs.concat(layer.getLatLngs());
-                } else if (layer instanceof L.Polygon) {
-                    latlngs = latlngs.concat(layer.getLatLngs()[0]); // outer ring
-                }
-            });
-
-            var latlngString = latlngs.map(function(latlng) {
-                return `${latlng.lat},${latlng.lng}`;
-            }).join(' ');
-
-            document.getElementById('latlng').value = latlngString;
-
-            // Calculate the length of the polyline
-            var length = calculateLength(latlngs);
-            console.log('Length:', length);
-
-            alert(`Panjang Polyline: ${length.toFixed(2)} meters`);
-        });
+    // Create the polyline and add it to the map
+    var existingPolyline = L.polyline(polylineLatLngs, {color: 'blue'}).addTo(map);
+    drawnItems.addLayer(existingPolyline);   
 
     document.getElementById('form').addEventListener('submit', function(event) {
-        event.preventDefault(); // Mencegah formulir dikirimkan secara langsung
-        
+        event.preventDefault();
+        const latlngInput = document.getElementById('latlng');
+        const latlngValue = latlngInput ? latlngInput.value : '';
+        const panjangInput = document.getElementById('panjang');
+        const panjangValue = panjangInput ? parseFloat(panjangInput.value) : null;
+
         const formData = {
-                paths: document.getElementById('latlng').value,
-                desa_id: document.getElementById('desa').value,
-                kode_ruas: document.getElementById('kode_ruas').value,
-                nama_ruas: document.getElementById('nama_ruas').value,
-                panjang: calculateLength(drawnItems.getLayers()[0].getLatLngs()), // Menggunakan fungsi calculateLength untuk menghitung panjang
-                lebar: parseFloat(document.getElementById('lebar').value),
-                eksisting_id: parseInt(document.getElementById('eksisting').value),
-                kondisi_id: parseInt(document.getElementById('kondisi').value),
-                jenisjalan_id: parseInt(document.getElementById('jenis_jalan').value),
-                keterangan: document.getElementById('keterangan').value
-            };
+            paths: document.getElementById('latlng').value,
+            desa_id: document.getElementById('desa').value,
+            kode_ruas: document.getElementById('kode_ruas').value,
+            nama_ruas: document.getElementById('nama_ruas').value,
+            panjang: panjangValue ? panjangValue :calculateLength(drawnItems.getLayers()[0].getLatLngs()),
+            lebar: parseFloat(document.getElementById('lebar').value),
+            eksisting_id: parseInt(document.getElementById('eksisting').value),
+            kondisi_id: parseInt(document.getElementById('kondisi').value),
+            jenisjalan_id: parseInt(document.getElementById('jenis_jalan').value),
+            keterangan: document.getElementById('keterangan').value
+        };
         console.log('Form data to be sent:', formData);
 
         const idRuasJalan = "{{ $ruasjalan['id'] }}";
