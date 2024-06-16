@@ -35,10 +35,10 @@ Route::controller(AuthController::class)->group(function () {
 
     Route::get('login', 'login')->name('login');
     Route::post('login', 'loginAction')->name('login.action');
-
+    
+    Route::post('logout', 'logout')->name('logout');
     // Logout sebaiknya menggunakan metode POST
-    Route::post('logout', 'logout')->middleware('auth')->name('logout');
-
+    // Route::post('logout', 'logout')->middleware('auth')->name('logout');
 
 });
 

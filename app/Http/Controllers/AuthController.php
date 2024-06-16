@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use GuzzleHttp\Client; 
 
 class AuthController extends Controller
 {
@@ -89,21 +90,26 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-
-        return redirect('/login');
-    }
-
-    public function profile()
-    {
-        return view('profile');
-    }
-
-    public function index()
-    {
-        return view('frontend.home');
+        {
+            $token = session('token');
+            $client = new Client();
+            $response = $client->request('POST', 'https://gisapis.manpits.xyz/api/logout', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Accept' => 'application/json',
+                ],
+            ]);
+    
+            if ($response->getStatusCode() == 200) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();    
+                
+                return redirect()->route('login.action')->with('success', 'anda telah keluar');
+            } else {
+                return redirect()->back()->with('error', 'keluar');
+            }
+        }
     }
 }
 

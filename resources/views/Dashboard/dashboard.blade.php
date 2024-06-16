@@ -85,22 +85,34 @@
 
 <div class="form-container">    
     <div class="search-container">
-        <input type="text" placeholder="Search...">
-        <button><i class="fas fa-search"></i></button>
+        <input type="text" id="search-input" placeholder="Search...">
+        <button id="search-button"><i class="fas fa-search"></i></button>
+    </div>
+    <div class="search-container">
+        <select class="select select-bordered w-full border-gray-300 rounded-lg shadow-sm" id="filter" name="filter" required>
+            <option value="">Tandai Berdasarkan...</option>
+            <option value="jenis">Jenis</option>
+            <option value="kondisi">Kondisi</option>
+        </select>
     </div>
     <div class="flex justify-between items-center bg-gray-100 p-4 rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-2xl " >
-        <span class="ml-auto mr-4">Nama User</span>
-    </div>
-</div>  
+        <span class="ml-auto mr-4" id = "nama_user" name="nama_user" >Nama User</span>
 
-<div class="content-container">    
-    <!-- Content -->
-    <div class="flex justify-between items-center bg-gray-100 p-4 rounded-tl-2xl rounded-tr-2xl">
-        <div>
-            <span class="cursor-pointer">Search</span>
+        <div id="jenis-legend" style="display: none;">
+            <div><span class="color-box" style="background-color: red;"></span> Merah: Provinsi</div>
+            <div><span class="color-box" style="background-color: yellow;"></span> Kuning: Kabupaten</div>
+            <div><span class="color-box" style="background-color: green;"></span> Hijau: Desa</div>
+        </div>
+        <div id="kondisi-legend" style="display: none;">
+            <div><span class="color-box" style="background-color: red;"></span> Merah: Rusak</div>
+            <div><span class="color-box" style="background-color: yellow;"></span> Kuning: Sedang</div>
+            <div><span class="color-box" style="background-color: green;"></span> Hijau: Baik</div>
         </div>
     </div>
-</div>
+</div> 
+<!-- <div id="legend" class="bg-white p-4 rounded shadow-md absolute top-20 left-1/2 transform -translate-x-1/2 z-10">
+
+</div>  -->
 
 <div class="sidebar bg-gray-800 text-white h-full py-6 px-4 rounded-tl-2xl rounded-tr-2xl">
     <div class="text-lg font-semibold mb-6">Provinsi Bali</div>
@@ -126,10 +138,13 @@
     </ul>
     <ul class="mt-auto">
         <li class="sidebar-item bg-blue-900 rounded-lg py-2 px-4 text-center mb-2">
-            <a href="#" class="flex items-center justify-center">
-                <span class="mr-3"><i class="fas fa-sign-out-alt"></i></span>
-                <span>Logout</span>
-            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
+                @csrf
+                <button type="submit" class="flex items-center justify-center w-full">
+                    <span class="mr-3"><i class="fas fa-sign-out-alt"></i></span>
+                    <span>Logout</span>
+                </button>
+            </form>
         </li>
     </ul>
 </div>
@@ -143,8 +158,32 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.0.2/dist/leaflet.geometryutil.min.js"></script>
 <script>
+        async function deleteData(id) {
+            try {
+                const token = document.querySelector("meta[name='api-token']").getAttribute('content');
+                const response = await fetch(`https://gisapis.manpits.xyz/api/ruasjalan/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                const deletedRow = document.getElementById(`row-${id}`);
+                if (deletedRow) {
+                    deletedRow.remove(); // Hapus baris dari tabel
+                }
+                console.log('Data berhasil dihapus');
+            } catch (error) {
+                console.error('Error deleting data:', error.message);
+            }
+        }
+    
     document.addEventListener('DOMContentLoaded', () => {
         var map = L.map('map').setView([-8.65, 115.22], 10);
+
         // Adding multiple basemaps
         const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 20,
@@ -177,9 +216,10 @@
         // Adding layer control to map
         L.control.layers(baseLayers).addTo(map);
 
-        // Function to draw polylines on the map
-        // Function to draw polylines on the map
-        function drawPolylines(polylineData) {
+        // Function to draw polylines on the map with popups
+        function drawPolylines(polylineData, filterType) {
+            let foundPolyline = false; // Flag to check if any polyline matched the search
+            const searchInput = document.getElementById('search-input').value.trim().toLowerCase();
             polylineData.forEach(polyline => {
                 const coordinates = polyline.paths.split(' ').map(coord => {
                     const [lat, lng] = coord.trim().split(',').map(parseFloat);
@@ -192,28 +232,136 @@
                     return; // Skip invalid coordinates
                 }
 
-                const line = L.polyline(coordinates, { color: 'blue' }).addTo(map);
-            });
-        }
-        
-        const token = document.querySelector('meta[name="api-token"]').getAttribute('content');
+                let color = 'blue'; // Default color
+                if (filterType === 'jenis') {
+                    switch(polyline.jenisjalan_id) {
+                        case 1:
+                            color = 'green';
+                            break;
+                        case 2:
+                            color = 'yellow';
+                            break;
+                        case 3:
+                            color = 'red';
+                            break;
+                    }
+                } else if (filterType === 'kondisi') {
+                    switch(polyline.kondisi_id) {
+                        case 1:
+                            color = 'green';
+                            break;
+                        case 2:
+                            color = 'yellow';
+                            break;
+                        case 3:
+                            color = 'red';
+                            break;
+                    }
+                }
 
-        // Fetch polyline data from the API
-        fetch('https://gisapis.manpits.xyz/api/ruasjalan', {
+                const line = L.polyline(coordinates, { color }).addTo(map);
+
+                // Create a popup with the road information
+                const popupContent = `
+                    <div>
+                        <strong>Nama Jalan:</strong> ${polyline.nama_ruas}<br>
+                        <strong>Panjang:</strong> ${polyline.panjang} km<br>
+                        <strong>Lebar:</strong> ${polyline.lebar} m<br>
+                        <strong>Desa:</strong> ${polyline.desa_id}<br>
+                        <a href="/ruasjalan/${polyline.id}/edit" class="btn btn-primary">Edit</a>
+                        <button onclick="deleteData(${polyline.id})" class="btn btn-danger">Delete</button>
+                    </div>
+                `;
+                line.bindPopup(popupContent);
+
+                // Add polyline to map if it matches the search criteria
+                // const searchInput = document.getElementById('search-input').value.trim().toLowerCase();
+                if (searchInput !== '' && polyline.nama_ruas.toLowerCase().includes(searchInput)) {
+                    line.addTo(map);
+                    foundPolyline = true;
+
+                    // Zoom to the polyline's bounds
+                    const polylineBounds = line.getBounds();
+                    map.fitBounds(polylineBounds);
+                }
+            });
+
+            // // If no polyline was found matching the search, alert the user
+            // if (!foundPolyline) {
+            //     alert('No polyline found with that name.');
+            // }
+        }
+
+        const token = document.querySelector('meta[name="api-token"]').getAttribute('content');
+        const GetUser = document.getElementById('nama_user');
+
+        fetch('https://gisapis.manpits.xyz/api/user', {
             headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${token}`
             }
         })
         .then(response => response.json())
-        .then(data => {
-            console.log('Data polylines:', data); // Log polyline data to ensure it's received correctly
-            drawPolylines(data.ruasjalan);
+        .then(userdata => {
+            console.log('Data polylines:', userdata.data.user.name);
+            GetUser.innerHTML = userdata.data.user.name;
         })
         .catch(error => {
-            console.error('Error fetching polyline data:', error);
+            console.error('There has been a problem with your fetch operation:', error);
+            GetUser.innerHTML = 'Failed to load user data';
+        });
+
+        // Fetch polyline data from the API
+        function fetchPolylineData(filterType) {
+            fetch('https://gisapis.manpits.xyz/api/ruasjalan', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data polylines:', data); // Log polyline data to ensure it's received correctly
+                drawPolylines(data.ruasjalan, filterType);
+            })
+            .catch(error => {
+                console.error('Error fetching polyline data:', error);
+            });
+        }
+
+        fetchPolylineData();
+
+        // Event listener for select change
+        document.getElementById('filter').addEventListener('change', (event) => {
+            const filterType = event.target.value;
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Polyline) {
+                    map.removeLayer(layer);
+                }
+            });
+            fetchPolylineData(filterType);
+
+            // Update legend display
+            if (filterType === 'jenis') {
+                document.getElementById('jenis-legend').style.display = 'block';
+                document.getElementById('kondisi-legend').style.display = 'none';
+            } else if (filterType === 'kondisi') {
+                document.getElementById('jenis-legend').style.display = 'none';
+                document.getElementById('kondisi-legend').style.display = 'block';
+            } else {
+                document.getElementById('jenis-legend').style.display = 'none';
+                document.getElementById('kondisi-legend').style.display = 'none';
+            }
+        });
+
+        // Event listener for search button
+        document.getElementById('search-button').addEventListener('click', () => {
+            map.eachLayer((layer) => {
+                if (layer instanceof L.Polyline) {
+                    map.removeLayer(layer);
+                }
+            });
+            fetchPolylineData(document.getElementById('filter').value);
         });
     });
-
 </script>
 
 </body>

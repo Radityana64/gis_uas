@@ -177,7 +177,6 @@ class RuasJalanController extends Controller
                 'kondisiData' => $kondisiData, // Mengirim kembali data tambahan
             ]);
         }
-        
     }
 
     public function update(Request $request, $id)
