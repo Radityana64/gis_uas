@@ -105,6 +105,15 @@
         .sidebar-details.active {
             display: block;
         }
+        .label {
+            background-color: rgba(255, 255, 255, 0.5); 
+            border: 2px solid white; 
+            border-radius: 5px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: black; 
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -128,7 +137,7 @@
             </a>
         </li>
         <li class="sidebar-item mb-2 hover:bg-blue-500 rounded-lg">
-            <a href="{{route ('RuasJalan.create') }}" class="flex items-center p-2">
+            <a href="{{route ('RuasJalan.create', ['previous' => 'dashboard']) }}" class="flex items-center p-2">
                 <span class="mr-3"><i class="fas fa-user"></i></span>
                 <span>Tambah Ruas Jalan</span>
             </a>
@@ -146,7 +155,7 @@
         </li>
     </ul>
 </div>
-<div class="sidebar-details fixed top-1 bottom-1 left-60 w-1/5 z-10 bg-white p-4 rounded-lg shadow-xl hidden" id="road-details">
+<div class="sidebar-details fixed top-1 bottom-1 left-60 z-10 bg-white p-4 rounded-lg shadow-xl hidden" id="road-details">
     <!-- Content will be dynamically populated here -->
 </div>
 
@@ -270,9 +279,12 @@
 
         try {
             // Fetch data from all necessary APIs
-            const [ruasjalanData, regionData] = await Promise.all([
+            const [ruasjalanData, regionData, eksistingData, jenisjalanData, kondisiData] = await Promise.all([
                 fetchData(api_main_url + "api/ruasjalan"),
-                fetchData(api_main_url + "api/mregion")
+                fetchData(api_main_url + "api/mregion"),
+                fetchData(api_main_url + "api/meksisting"),
+                fetchData(api_main_url + "api/mjenisjalan"),
+                fetchData(api_main_url + "api/mkondisi"),
             ]);
 
             console.log('ruasjalanData:', ruasjalanData);
@@ -320,24 +332,48 @@
             const desaMap = new Map(regionData.desa.map(item => [item.id, item.desa]));
             const kecamatanMap = new Map(regionData.kecamatan.map(item => [item.id, item.kecamatan]));
             const kabupatenMap = new Map(regionData.kabupaten.map(item => [item.id, item.kabupaten]));
+            const eksistingMap = new Map(eksistingData.eksisting.map(item => [item.id, item.eksisting]));
+            const jenisjalanMap = new Map(jenisjalanData.eksisting.map(item => [item.id, item.jenisjalan]));
+            const kondisiMap = new Map(kondisiData.eksisting.map(item => [item.id, item.kondisi]))
+            
+            async function getLocationDetails(desaId) {
+                const kecamatanResponse = await fetchData(api_main_url + `api/kecamatanbydesaid/${desaId}`);
+                const kabupatenResponse = await fetchData(api_main_url + `api/kabupatenbykecamatanid/${kecamatanResponse.kecamatan.id}`);
+                const provinsiResponse = await fetchData(api_main_url + `api/provinsibykabupatenid/${kabupatenResponse.kabupaten.id}`);
+                return {
+                    kecamatan: kecamatanResponse.kecamatan.kecamatan,
+                    kabupaten: kabupatenResponse.kabupaten.kabupaten,
+                    provinsi: provinsiResponse.provinsi.provinsi
+                };
+            }
 
-            // Function to draw polylines on the map with popups
+            
             // Function to draw polylines on the map with popups
             async function drawPolylines(polylineData, filterType) {
                 let foundPolyline = false; // Flag untuk mengecek apakah ada polyline yang sesuai dengan pencarian
                 const searchInput = document.getElementById('search-input').value.trim().toLowerCase();
+                let currentMarkers = []; // Array untuk menyimpan marker saat ini
+                let currentLabels = [];
 
-                // Loop through each polyline data
-                polylineData.forEach(async (polyline) => {
+                // Fungsi untuk menghapus marker saat ini
+                function removeCurrentMarkers() {
+                    currentMarkers.forEach(marker => map.removeLayer(marker));
+                    currentMarkers = [];
+                    // currentLabels.forEach(label => map.removeLayer(label));
+                    // currentLabels = [];
+                }
+                
+                // Loop melalui setiap data polyline
+                polylineData.forEach((polyline) => {
                     const coordinates = polyline.paths.split(' ').map(coord => {
                         const [lat, lng] = coord.trim().split(',').map(parseFloat);
                         return L.latLng(lat, lng); // Menggunakan L.latLng untuk membuat objek LatLng Leaflet
                     });
 
-                    // Check if coordinates are valid
+                    // Cek apakah koordinat valid
                     if (!coordinates.every(coord => !isNaN(coord.lat) && !isNaN(coord.lng))) {
                         console.error('Invalid coordinates:', coordinates);
-                        return; // Skip invalid coordinates
+                        return; // Lewati koordinat tidak valid
                     }
 
                     let color = 'blue'; // Warna default
@@ -368,57 +404,61 @@
                     }
 
                     const line = L.polyline(coordinates, { color }).addTo(map);
+                    const label = L.divIcon({
+                        className: 'label',
+                        html: `<div>${polyline.kode_ruas}</div>`,
+                        iconSize: [40, 20],
+                        iconAnchor: [20, 10],
+                    });
+
+                    const labelMarker = L.marker(line.getCenter(), { icon: label }).addTo(map);
+                    currentLabels.push(labelMarker);
 
                     // Event listener untuk klik pada polyline
-                    line.on('click', (e) => {
+                    line.on('click', async (e) => {
                         const sidebarDetails = document.getElementById('road-details');
+
+                        const locationDetails = await getLocationDetails(polyline.desa_id);
 
                         sidebarDetails.innerHTML = `
                             <h2 class="text-lg font-semibold mb-4 mt-20">Detail Ruas Jalan</h2>
                             <div><strong>Nama Jalan:</strong> ${polyline.nama_ruas}</div>
-                            <div><strong>Panjang:</strong> ${polyline.panjang} m</div>
+                            <div><strong>Kode:</strong> ${polyline.kode_ruas}</div>
+                            <div><strong>Nama Desa:</strong> ${desaMap.get(polyline.desa_id)}</div>
+                            <div><strong>Kecamatan:</strong> ${locationDetails.kecamatan}</div>
+                            <div><strong>Kabupaten:</strong> ${locationDetails.kabupaten}</div>
+                            <div><strong>Provinsi:</strong> ${locationDetails.provinsi}</div>
+                            <div><strong>Panjang:</strong> ${parseFloat(polyline.panjang).toFixed(2)} m</div>
                             <div><strong>Lebar:</strong> ${polyline.lebar} m</div>
-                            <div><strong>Jenis:</strong> ${polyline.jenisjalan_id}</div>
-                            <div><strong>Kondisi:</strong> ${polyline.kondisi_id}</div>
+                            <div><strong>Material:</strong> ${eksistingMap.get(polyline.eksisting_id)}</div>
+                            <div><strong>Jenis:</strong> ${jenisjalanMap.get(polyline.jenisjalan_id)}</div>
+                            <div><strong>Kondisi:</strong> ${kondisiMap.get(polyline.kondisi_id)}</div>
+                            <div><strong>Keterangan:</strong> ${polyline.keterangan}</div>
                             <div class="btn-group">
-                                <button class="btn btn-primary" onclick="window.location.href='/ruasjalan/${polyline.id}/edit'" style="color: white;">Edit</button>
+                                <button class="btn btn-primary" onclick="window.location.href='/ruasjalan/${polyline.id}/edit?previous=dashboard'" style="color: white;">Edit</button>
                                 <button onclick="deleteData(${polyline.id})" class="btn btn-danger">Delete</button>
                             </div>
                         `;
 
                         sidebarDetails.classList.add('active'); // Tampilkan sidebar detail
+
+                        // Hapus marker saat ini jika ada
+                        removeCurrentMarkers();
+
                         // Tambahkan marker pada titik awal dan akhir polyline
                         const startMarker = L.marker(coordinates[0], { icon: markerIcon }).addTo(map);
                         const endMarker = L.marker(coordinates[coordinates.length - 1], { icon: markerIcon }).addTo(map);
+                        currentMarkers.push(startMarker, endMarker);
 
                         // Bind popup pada marker
                         startMarker.bindPopup(`<b>Start</b><br>Coordinates: ${coordinates[0].lat.toFixed(6)}, ${coordinates[0].lng.toFixed(6)}`);
                         endMarker.bindPopup(`<b>End</b><br>Coordinates: ${coordinates[coordinates.length - 1].lat.toFixed(6)}, ${coordinates[coordinates.length - 1].lng.toFixed(6)}`);
-
-                        // Hapus marker sebelumnya jika ada
-                        if (map.hasLayer(startMarker)) {
-                            map.removeLayer(startMarker);
-                        }
-                        if (map.hasLayer(endMarker)) {
-                            map.removeLayer(endMarker);
-                        }
-                        
-                        
-                    });
-
-                    // Event listener untuk menghapus sidebar detail ketika peta diklik di tempat lain
-                    map.on('click', (e) => {
-                        const sidebarDetails = document.getElementById('road-details');
-                        const clickedOnPolyline = e.originalEvent.target.classList.contains('leaflet-interactive');
-
-                        if (!clickedOnPolyline) {
-                            sidebarDetails.classList.remove('active'); // Sembunyikan sidebar detail
-                        }
                     });
 
                     // Tambahkan polyline ke peta jika sesuai dengan kriteria pencarian
-                    if (searchInput !== '' && polyline.nama_ruas.toLowerCase().includes(searchInput)) {
+                    if (searchInput !== '' && polyline.nama_ruas.toLowerCase().includes(searchInput)||searchInput !== '' && polyline.kode_ruas.includes(searchInput)) {
                         line.addTo(map);
+                        labelMarker.addTo(map);
                         foundPolyline = true;
 
                         // Zoom ke batas polyline
@@ -426,8 +466,18 @@
                         map.fitBounds(polylineBounds);
                     }
                 });
-            }
 
+                // Event listener untuk menghapus sidebar detail ketika peta diklik di tempat lain
+                map.on('click', (e) => {
+                    const sidebarDetails = document.getElementById('road-details');
+                    const clickedOnPolyline = e.originalEvent.target.classList.contains('leaflet-interactive');
+
+                    if (!clickedOnPolyline) {
+                        sidebarDetails.classList.remove('active'); // Sembunyikan sidebar detail
+                        removeCurrentMarkers(); // Hapus marker saat ini
+                    }
+                });
+            }
 
         const token = document.querySelector('meta[name="api-token"]').getAttribute('content');
         const GetUser = document.getElementById('nama_user');

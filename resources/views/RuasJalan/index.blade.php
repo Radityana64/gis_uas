@@ -49,7 +49,7 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">Data Ruas Jalan</h1>
             <div class="space-x-4">
-                <a href="{{ route('RuasJalan.create') }}" class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Create Data</a>
+                <a href="{{ route('RuasJalan.create', ['previous' => 'rjindex']) }}" class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Create Data</a>
                 <a href="{{ route('dashboard') }}" class="w-full px-4 py-2 text-white bg-blue-500 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400">Dashboard</a>
             </div>
         </div>
@@ -58,19 +58,24 @@
 
         </div>
 
+        <div>
+            <input type="text" id="searchInput" class="search-input border border-gray-300 shadow-sm px-3 py-2 rounded-lg mb-2" placeholder="Search...">
+        </div>
+
         <div class="overflow-x-auto overflow-y-scroll bg-white rounded-lg shadow-md max-h-screen">
             <table class="min-w-full bg-white">
                 <thead class="bg-gray-200">
                     <tr>
-                        <th class="px-4 py-2 text-left">No</th>
-                        <th class="px-4 py-2 text-left">Nama Ruas</th>
-                        <th class="px-4 py-2 text-left">Nama Desa</th>
-                        <th class="px-4 py-2 text-left">Panjang</th>
-                        <th class="px-4 py-2 text-left">Lebar</th>
-                        <th class="px-4 py-2 text-left">Eksisting</th>
-                        <th class="px-4 py-2 text-left">Jenis Jalan</th>
-                        <th class="px-4 py-2 text-left">Kondisi</th>
-                        <th class="px-4 py-2 text-left">Keterangan</th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('no')">No <span id="sortIconNo"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('nama_ruas')">Nama Ruas <span id="sortIconNamaRuas"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('kode_ruas')">Kode Ruas <span id="sortIconKodeRuas"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('nama_desa')">Nama Desa <span id="sortIconNamaDesa"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('panjang')">Panjang <span id="sortIconPanjang"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('lebar')">Lebar <span id="sortIconLebar"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('eksisting')">Eksisting <span id="sortIconEksisting"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('jenis_jalan')">Jenis Jalan <span id="sortIconJenisJalan"></span></th>
+                        <th class="px-4 py-2 text-left" onclick="sortTable('kondisi')">Kondisi <span id="sortIconKondisi"></span></th>
+                        <th class="px-4 py-2 text-left" style= "width: 300px;">Keterangan</th>
                         <th class="px-4 py-2 text-left">Aksi</th>
                     </tr>
                 </thead>
@@ -178,6 +183,7 @@
 
                 const tableBody = document.getElementById("polylineTableBody");
                 const summary = document.getElementById("summary");
+                const searchInput = document.getElementById("searchInput");
 
                 let totalData = 0;
                 let kondisiCounts = { baik: 0, sedang: 0, buruk: 0 };
@@ -204,17 +210,20 @@
                     }
                 });
 
-                const displayData = (start, end) => {
-                    for (let i = start; i < end; i++) {
-                        const ruas = ruasjalanList[i];
+                const displayData = (data) => {
+                    // Kosongkan tabel sebelum menambahkan data baru
+                    tableBody.innerHTML = '';
+
+                    data.forEach((ruas, index) => {
                         totalData++;
 
                         const newRow = document.createElement("tr");
                         newRow.id = `row-${ruas.id}`;
-                        newRow.className = i % 2 === 0 ? 'bg-gray-100' : 'bg-white';
+                        newRow.className = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
                         newRow.innerHTML = `
-                            <td class="border px-4 py-2">${i + 1}</td>
+                            <td class="border px-4 py-2">${index + 1}</td>
                             <td class="border px-4 py-2">${ruas.nama_ruas}</td>
+                            <td class="border px-4 py-2">${ruas.kode_ruas}</td>
                             <td class="border px-4 py-2">${desaMap.get(ruas.desa_id)}</td>
                             <td class="border px-4 py-2">${parseFloat(ruas.panjang).toFixed(2)}</td>
                             <td class="border px-4 py-2">${parseFloat(ruas.lebar).toFixed(2)}</td>
@@ -223,25 +232,126 @@
                             <td class="border px-4 py-2">${kondisiMap.get(ruas.kondisi_id)}</td>
                             <td class="border px-4 py-2">${ruas.keterangan}</td>
                             <td class="border px-4 py-2">
-                                <button class="btn btn-primary bg-blue-500 text-white" onclick="window.location.href='/ruasjalan/${ruas.id}/edit'">Edit</button>
+                                <button class="btn btn-primary bg-blue-500 text-white" onclick="window.location.href='/ruasjalan/${ruas.id}/edit?previous=rjindex'">Edit</button>
                                 <button onclick="deleteData(${ruas.id})" class="btn btn-danger bg-red-500 text-white">Delete</button>
                             </td>
                         `;
                         tableBody.appendChild(newRow);
-                    }
+                    });
                 };
 
-                // Menampilkan 10 data pertama
-                displayData(0, Math.min(ruasjalanList.length));
+                // Inisialisasi data pertama kali
+                displayData(ruasjalanList);
 
-                tableBody.addEventListener('scroll', function () {
-                    const { scrollTop, scrollHeight, clientHeight } = tableBody;
-                    if (scrollTop + clientHeight >= scrollHeight - 5) {
-                        const start = tableBody.getElementsByTagName("tr").length;
-                        const end = Math.min(start + 10, ruasjalanList.length);
-                        displayData(start, end);
+                // Sorting function
+                const sortTable = (sortBy) => {
+                    let sortedData = [...ruasjalanList];
+
+                    switch (sortBy) {
+                        case 'no':
+                            sortedData.sort((a, b) => a.id - b.id);
+                            break;
+                        case 'no_desc':
+                            sortedData.sort((a, b) => b.id - a.id);
+                            break;
+                        case 'nama_ruas':
+                            sortedData.sort((a, b) => a.nama_ruas.localeCompare(b.nama_ruas));
+                            break;
+                        case 'nama_ruas_desc':
+                            sortedData.sort((a, b) => b.nama_ruas.localeCompare(a.nama_ruas));
+                            break;
+                        case 'kode_ruas':
+                            sortedData.sort((a, b) => a.kode_ruas.localeCompare(b.kode_ruas));
+                            break;
+                        case 'kode_ruas_desc':
+                            sortedData.sort((a, b) => b.kode_ruas.localeCompare(a.kode_ruas));
+                            break;
+                        case 'nama_desa':
+                            sortedData.sort((a, b) => desaMap.get(a.desa_id).localeCompare(desaMap.get(b.desa_id)));
+                            break;
+                        case 'nama_desa_desc':
+                            sortedData.sort((a, b) => desaMap.get(b.desa_id).localeCompare(desaMap.get(a.desa_id)));
+                            break;
+                        case 'panjang':
+                            sortedData.sort((a, b) => a.panjang - b.panjang);
+                            break;
+                        case 'panjang_desc':
+                            sortedData.sort((a, b) => b.panjang - a.panjang);
+                            break;
+                        case 'lebar':
+                            sortedData.sort((a, b) => a.lebar - b.lebar);
+                            break;
+                        case 'lebar_desc':
+                            sortedData.sort((a, b) => b.lebar - a.lebar);
+                            break;
+                        case 'eksisting':
+                            sortedData.sort((a, b) => eksistingMap.get(a.eksisting_id).localeCompare(eksistingMap.get(b.eksisting_id)));
+                            break;
+                        case 'eksisting_desc':
+                            sortedData.sort((a, b) => eksistingMap.get(b.eksisting_id).localeCompare(eksistingMap.get(a.eksisting_id)));
+                            break;
+                        case 'jenis_jalan':
+                            sortedData.sort((a, b) => jenisjalanMap.get(a.jenisjalan_id).localeCompare(jenisjalanMap.get(b.jenisjalan_id)));
+                            break;
+                        case 'jenis_jalan_desc':
+                            sortedData.sort((a, b) => jenisjalanMap.get(b.jenisjalan_id).localeCompare(jenisjalanMap.get(a.jenisjalan_id)));
+                            break;
+                        case 'kondisi':
+                            sortedData.sort((a, b) => kondisiMap.get(a.kondisi_id).localeCompare(kondisiMap.get(b.kondisi_id)));
+                            break;
+                        case 'kondisi_desc':
+                            sortedData.sort((a, b) => kondisiMap.get(b.kondisi_id).localeCompare(kondisiMap.get(a.kondisi_id)));
+                            break;
+                        default:
+                            break;
                     }
+
+                    // Tampilkan data yang sudah diurutkan
+                    displayData(sortedData);
+                };
+
+                // Initial sort icon state
+                const resetSortIcons = () => {
+                    const sortIcons = document.querySelectorAll('[id^="sortIcon"]');
+                    sortIcons.forEach(icon => icon.innerHTML = '');
+                };
+
+                // Tambahkan event listener untuk setiap header tabel agar bisa diurutkan
+                const tableHeaders = document.querySelectorAll('thead th');
+                tableHeaders.forEach(header => {
+                    header.addEventListener('click', () => {
+                        const sortBy = header.textContent.trim().toLowerCase().replace(/\s+/g, '_');
+                        resetSortIcons();
+
+                        // Toggle icon sort
+                        if (header.querySelector('span').innerHTML === '') {
+                            header.querySelector('span').innerHTML = ' &#x25B2;'; // Up arrow
+                            sortTable(sortBy);
+                        } else if (header.querySelector('span').innerHTML === ' &#x25B2;') {
+                            header.querySelector('span').innerHTML = ' &#x25BC;'; // Down arrow
+                            sortTable(sortBy + '_desc');
+                        } else {
+                            header.querySelector('span').innerHTML = ' &#x25B2;'; // Up arrow
+                            sortTable(sortBy);
+                        }
+                    });
                 });
+
+                // Searching function
+                searchInput.addEventListener('input', () => {
+                    const searchValue = searchInput.value.trim().toLowerCase();
+                    const filteredData = ruasjalanList.filter(ruas =>
+                        ruas.nama_ruas.toLowerCase().includes(searchValue) ||
+                        ruas.kode_ruas.toLowerCase().includes(searchValue) ||
+                        desaMap.get(ruas.desa_id).toLowerCase().includes(searchValue) ||
+                        eksistingMap.get(ruas.eksisting_id).toLowerCase().includes(searchValue) ||
+                        jenisjalanMap.get(ruas.jenisjalan_id).toLowerCase().includes(searchValue) ||
+                        kondisiMap.get(ruas.kondisi_id).toLowerCase().includes(searchValue) ||
+                        ruas.keterangan.toLowerCase().includes(searchValue)
+                    );
+                    displayData(filteredData);
+                });
+
 
                 // Tampilkan ringkasan data
                 summary.innerHTML = `

@@ -141,6 +141,19 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const previousPage = urlParams.get('previous') || 'index'; // Default ke 'index' jika tidak ada
+
+    // Fungsi untuk menentukan URL redirect
+    function getRedirectRoute() {
+        switch(previousPage) {
+            case 'dashboard':
+                return "{{ route('dashboard') }}";
+            case 'rjindex':
+            default:
+                return "{{ route('RuasJalan.index') }}";
+        }
+    }
     // Fungsi untuk menghitung panjang garis polyline
     function calculateLength(latlngs) {
         let length = 0;
@@ -451,7 +464,7 @@
                         'success'
                     ).then(() => {
                         // Refresh halaman dashboard atau navigasi kembali ke halaman dashboard
-                        window.location.href = "{{ route('RuasJalan.index') }}"; // Ganti dengan URL halaman dashboard yang sesuai
+                        window.location.href = getRedirectRoute(); // Ganti dengan URL halaman dashboard yang sesuai
                 });
             })
             .catch(error => {
