@@ -53,28 +53,25 @@
                 <a href="{{ route('dashboard') }}" class="w-full px-4 py-2 text-white bg-blue-500 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400">Dashboard</a>
             </div>
         </div>
-
         <div class="mb-6 flex flex-wrap gap-4" id="summary">
-
+        <!-- populate data summary about kondisi and jenisjalan  -->
         </div>
-
         <div>
             <input type="text" id="searchInput" class="search-input border border-gray-300 shadow-sm px-3 py-2 rounded-lg mb-2" placeholder="Search...">
         </div>
-
         <div class="overflow-x-auto overflow-y-scroll bg-white rounded-lg shadow-md max-h-screen">
             <table class="min-w-full bg-white">
                 <thead class="bg-gray-200">
                     <tr>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('no')">No <span id="sortIconNo"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('nama_ruas')">Nama Ruas <span id="sortIconNamaRuas"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('kode_ruas')">Kode Ruas <span id="sortIconKodeRuas"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('nama_desa')">Nama Desa <span id="sortIconNamaDesa"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('panjang')">Panjang <span id="sortIconPanjang"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('lebar')">Lebar <span id="sortIconLebar"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('eksisting')">Eksisting <span id="sortIconEksisting"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('jenis_jalan')">Jenis Jalan <span id="sortIconJenisJalan"></span></th>
-                        <th class="px-4 py-2 text-left" onclick="sortTable('kondisi')">Kondisi <span id="sortIconKondisi"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="no">No <span id="sortIconNo"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="nama_ruas">Nama Ruas <span id="sortIconNamaRuas"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="kode_ruas">Kode Ruas <span id="sortIconKodeRuas"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="nama_desa">Nama Desa <span id="sortIconNamaDesa"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="panjang">Panjang <span id="sortIconPanjang"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="lebar">Lebar <span id="sortIconLebar"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="eksisting">Eksisting <span id="sortIconEksisting"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="jenis_jalan">Jenis Jalan <span id="sortIconJenisJalan"></span></th>
+                        <th class="px-4 py-2 text-left cursor-pointer" data-sort="kondisi">Kondisi <span id="sortIconKondisi"></span></th>
                         <th class="px-4 py-2 text-left" style= "width: 300px;">Keterangan</th>
                         <th class="px-4 py-2 text-left">Aksi</th>
                     </tr>
@@ -85,7 +82,9 @@
             </table>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         async function deleteData(id) {
             try {
@@ -305,37 +304,37 @@
                         default:
                             break;
                     }
-
                     // Tampilkan data yang sudah diurutkan
                     displayData(sortedData);
+
                 };
 
-                // Initial sort icon state
+                // Event listener untuk setiap header tabel agar bisa diurutkan
+                const tableHeaders = document.querySelectorAll('thead th');
+                    tableHeaders.forEach(header => {
+                        header.addEventListener('click', () => {
+                            const sortBy = header.getAttribute('data-sort'); // Ambil nilai data-sort dari th
+                            const currentSortOrder = header.getAttribute('data-sort-order') || 'asc'; // Ambil nilai data-sort-order atau default ke 'asc'
+                            resetSortIcons();
+
+                            // Atur ikon sort sesuai dengan urutan saat ini
+                            if (currentSortOrder === 'asc') {
+                                header.querySelector('span').innerHTML = ' &#x25B2;'; // Up arrow
+                                header.setAttribute('data-sort-order', 'desc'); // Ubah data-sort-order menjadi 'desc'
+                                sortTable(sortBy);
+                            } else {
+                                header.querySelector('span').innerHTML = ' &#x25BC;'; // Down arrow
+                                header.setAttribute('data-sort-order', 'asc'); // Ubah data-sort-order menjadi 'asc'
+                                sortTable(sortBy + '_desc');
+                            }
+                        });
+                    });
+
+                // Fungsi untuk mengatur ulang icon sort
                 const resetSortIcons = () => {
                     const sortIcons = document.querySelectorAll('[id^="sortIcon"]');
                     sortIcons.forEach(icon => icon.innerHTML = '');
                 };
-
-                // Tambahkan event listener untuk setiap header tabel agar bisa diurutkan
-                const tableHeaders = document.querySelectorAll('thead th');
-                tableHeaders.forEach(header => {
-                    header.addEventListener('click', () => {
-                        const sortBy = header.textContent.trim().toLowerCase().replace(/\s+/g, '_');
-                        resetSortIcons();
-
-                        // Toggle icon sort
-                        if (header.querySelector('span').innerHTML === '') {
-                            header.querySelector('span').innerHTML = ' &#x25B2;'; // Up arrow
-                            sortTable(sortBy);
-                        } else if (header.querySelector('span').innerHTML === ' &#x25B2;') {
-                            header.querySelector('span').innerHTML = ' &#x25BC;'; // Down arrow
-                            sortTable(sortBy + '_desc');
-                        } else {
-                            header.querySelector('span').innerHTML = ' &#x25B2;'; // Up arrow
-                            sortTable(sortBy);
-                        }
-                    });
-                });
 
                 // Searching function
                 searchInput.addEventListener('input', () => {

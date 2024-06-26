@@ -70,13 +70,6 @@ class RuasJalanController extends Controller
         // Beri respons sukses
         return redirect()->route('RuasJalan.index')->with('success', 'Data ruas jalan berhasil disimpan.');
     }
-    
-    // public function edit($id)
-    // {
-    //     $ruasjalan = RuasJalan::findOrFail($id);
-    //     return view('RuasJalan.edit', compact('ruasjalan'));
-    // }
-    // Contoh di controller
 
     public function edit($id)
     {

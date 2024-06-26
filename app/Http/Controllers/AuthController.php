@@ -57,36 +57,30 @@ class AuthController extends Controller
 
     public function loginAction(Request $request)
     {
-        $data = Validator::make($request->all(), [
+        $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
-        ])->validate();
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed')
-            ]);
-        }
+            'password' => 'required|string|min:8'
+        ]);
 
-        $request->session()->regenerate();
         try {
-            $response = Http::post('https://gisapis.manpits.xyz/api/login', $data);
-            if ($response->successful()) {
-                $responseData = $response->json();
-                if (isset($responseData['meta']['token'])) {
-                    session(['token' => $responseData['meta']['token']]);
+            $response = Http::post('https://gisapis.manpits.xyz/api/login',[
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
 
-                    return redirect()->route('dashboard')->with('success', $responseData['meta']['message']);
-                } else {
-                    return back()->withErrors(['message' => 'Login failed. Please try again.']);
-                }
+            $responseData = $response->json();
+
+            if ($response->successful() && isset($responseData['meta']['token'])) {
+                session(['token' => $responseData['meta']['token']]);
+                return redirect()->route('dashboard')->with('status', 'Login successful! Welcome.');
             } else {
-                return back()->withErrors(['message' => 'Login failed. Please try again.']);
+                throw new \Exception('Invalid credentials or failed to get token from API response.');
             }
         } catch (\Exception $e) {
-            return back()->withErrors(['message' => 'An error occurred: ' . $e->getMessage()]);
+            return redirect()->back()->withErrors(['login' => 'Login failed: ' . $e->getMessage()]);
         }
-        return redirect()->route('dashboard');
     }
+
 
     public function logout(Request $request)
     {
