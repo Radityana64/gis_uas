@@ -38,7 +38,7 @@
             border-color: #bd2130;
         }
         .overflow-y-scroll {
-            max-height: 500px; /* Atur ketinggian maksimum sesuai kebutuhan */
+            max-height: 380px; /* Atur ketinggian maksimum sesuai kebutuhan */
             overflow-y: auto;
         }
         
@@ -80,6 +80,15 @@
                     <!-- Data akan diisi menggunakan JavaScript -->
                 </tbody>
             </table>
+        </div>
+        <div class="mt-4 flex justify-between items-center">
+            <div>
+                <span id="pageInfo"></span>
+            </div>
+            <div>
+                <button id="prevPage" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-l">Previous</button>
+                <button id="nextPage" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-r">Next</button>
+            </div>
         </div>
     </div>
 
@@ -209,33 +218,66 @@
                     }
                 });
 
+                let currentPage = 1;
+                const itemsPerPage = 8;
+
                 const displayData = (data) => {
-                    // Kosongkan tabel sebelum menambahkan data baru
-                    tableBody.innerHTML = '';
+                    const tableBody = document.getElementById("polylineTableBody");
+                    const pageInfo = document.getElementById("pageInfo");
+                    const prevPageBtn = document.getElementById("prevPage");
+                    const nextPageBtn = document.getElementById("nextPage");
 
-                    data.forEach((ruas, index) => {
-                        totalData++;
+                    const totalPages = Math.ceil(data.length / itemsPerPage);
 
-                        const newRow = document.createElement("tr");
-                        newRow.id = `row-${ruas.id}`;
-                        newRow.className = index % 2 === 0 ? 'bg-gray-100' : 'bg-white';
-                        newRow.innerHTML = `
-                            <td class="border px-4 py-2">${index + 1}</td>
-                            <td class="border px-4 py-2">${ruas.nama_ruas}</td>
-                            <td class="border px-4 py-2">${ruas.kode_ruas}</td>
-                            <td class="border px-4 py-2">${desaMap.get(ruas.desa_id)}</td>
-                            <td class="border px-4 py-2">${parseFloat(ruas.panjang).toFixed(2)}</td>
-                            <td class="border px-4 py-2">${parseFloat(ruas.lebar).toFixed(2)}</td>
-                            <td class="border px-4 py-2">${eksistingMap.get(ruas.eksisting_id)}</td>
-                            <td class="border px-4 py-2">${jenisjalanMap.get(ruas.jenisjalan_id)}</td>
-                            <td class="border px-4 py-2">${kondisiMap.get(ruas.kondisi_id)}</td>
-                            <td class="border px-4 py-2">${ruas.keterangan}</td>
-                            <td class="border px-4 py-2">
-                                <button class="btn btn-primary bg-blue-500 text-white" onclick="window.location.href='/ruasjalan/${ruas.id}/edit?previous=rjindex'">Edit</button>
-                                <button onclick="deleteData(${ruas.id})" class="btn btn-danger bg-red-500 text-white">Delete</button>
-                            </td>
-                        `;
-                        tableBody.appendChild(newRow);
+                    const displayPageData = () => {
+                        tableBody.innerHTML = '';
+                        const start = (currentPage - 1) * itemsPerPage;
+                        const end = start + itemsPerPage;
+                        const pageData = data.slice(start, end);
+
+                        pageData.forEach((ruas, index) => {
+                            const actualIndex = start + index;
+                            const newRow = document.createElement("tr");
+                            newRow.id = `row-${ruas.id}`;
+                            newRow.className = actualIndex % 2 === 0 ? 'bg-gray-100' : 'bg-white';
+                            newRow.innerHTML = `
+                                <td class="border px-4 py-2">${actualIndex + 1}</td>
+                                <td class="border px-4 py-2">${ruas.nama_ruas}</td>
+                                <td class="border px-4 py-2">${ruas.kode_ruas}</td>
+                                <td class="border px-4 py-2">${desaMap.get(ruas.desa_id)}</td>
+                                <td class="border px-4 py-2">${parseFloat(ruas.panjang).toFixed(2)}</td>
+                                <td class="border px-4 py-2">${parseFloat(ruas.lebar).toFixed(2)}</td>
+                                <td class="border px-4 py-2">${eksistingMap.get(ruas.eksisting_id)}</td>
+                                <td class="border px-4 py-2">${jenisjalanMap.get(ruas.jenisjalan_id)}</td>
+                                <td class="border px-4 py-2">${kondisiMap.get(ruas.kondisi_id)}</td>
+                                <td class="border px-4 py-2">${ruas.keterangan}</td>
+                                <td class="border px-4 py-2">
+                                    <button class="btn btn-primary bg-blue-500 text-white" onclick="window.location.href='/ruasjalan/${ruas.id}/edit?previous=rjindex'">Edit</button>
+                                    <button onclick="deleteData(${ruas.id})" class="btn btn-danger bg-red-500 text-white">Delete</button>
+                                </td>
+                            `;
+                            tableBody.appendChild(newRow);
+                        });
+
+                        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                        prevPageBtn.disabled = currentPage === 1;
+                        nextPageBtn.disabled = currentPage === totalPages;
+                    };
+
+                    displayPageData();
+
+                    prevPageBtn.addEventListener('click', () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            displayPageData();
+                        }
+                    });
+
+                    nextPageBtn.addEventListener('click', () => {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            displayPageData();
+                        }
                     });
                 };
 
@@ -348,6 +390,7 @@
                         kondisiMap.get(ruas.kondisi_id).toLowerCase().includes(searchValue) ||
                         ruas.keterangan.toLowerCase().includes(searchValue)
                     );
+                    currentPage = 1;
                     displayData(filteredData);
                 });
 
@@ -397,7 +440,7 @@
                                         </div>
                                         <div class="flex-1 min-w-0 ms-4 ml-4">
                                             <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
-                                                Buruk
+                                                Rusak
                                             </p>
                                         </div>
                                         <div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">

@@ -18,20 +18,17 @@ class AuthController extends Controller
 
     public function registerSave(Request $request)
     {
-        
-        $data = Validator::make($request->all(), [
+        $request->validate([
             'name' => 'required',
             'email' => 'required|email',
             'password' => 'required'
-        ])->validate();
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'level' => 'Admin'
         ]);
         try {
-            $response = Http::post('https://gisapis.manpits.xyz/api/register', $data);
+            $response = Http::post('https://gisapis.manpits.xyz/api/register',[
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
             if ($response->successful()) {
                 $responseData = $response->json();
                 if ($responseData['meta']['code'] == 200) {

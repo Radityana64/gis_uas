@@ -34,7 +34,7 @@
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="nama_ruas">
                             Nama Ruas
                         </label>
-                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="nama_ruas" type="text" name="nama_ruas" value="{{ $ruasjalan['nama_ruas'] ?? '' }}" required>
+                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="nama_ruas" type="text" name="nama_ruas" placeholder="Nama Ruas" value="{{ $ruasjalan['nama_ruas'] ?? '' }}" required>
                     </div>
                 </div>
                 <div class="flex flex-wrap -mx-3 mb-6">
@@ -45,7 +45,7 @@
                         <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="province" name="province" required>
                             <option value="">Pilih Provinsi</option>
                             @foreach($regionData['provinsi'] as $provinsi)
-                                <option value="{{ $provinsi['id'] }}" {{ isset($ruasjalan['province_id']) && $ruasjalan['province_id'] == $provinsi['id'] ? 'selected' : '' }}>{{ $provinsi['provinsi'] }}</option>
+                                <option value="{{ $provinsi['id'] }}" {{ $ruasjalan['province_id'] == $provinsi['id'] ? 'selected' : '' }}>{{ $provinsi['provinsi'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -55,9 +55,6 @@
                         </label>
                         <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="kabupaten" name="kabupaten" required>
                             <option value="">Pilih Kabupaten</option>
-                            @foreach($regionData['kabupaten'] as $kabupaten)
-                                <option value="{{ $kabupaten['id'] }}" {{ isset($ruasjalan['kabupaten_id']) && $ruasjalan['kabupaten_id'] == $kabupaten['id'] ? 'selected' : '' }}>{{ $kabupaten['kabupaten'] }}</option>
-                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -68,9 +65,6 @@
                         </label>
                         <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="kecamatan" name="kecamatan" required>
                             <option value="">Pilih Kecamatan</option>
-                            @foreach($regionData['kecamatan'] as $kecamatan)
-                                <option value="{{ $kecamatan['id'] }}" {{ isset($ruasjalan['kecamatan_id']) && $ruasjalan['kecamatan_id'] == $kecamatan['id'] ? 'selected' : '' }}>{{ $kecamatan['kecamatan'] }}</option>
-                            @endforeach
                         </select>
                     </div>
                     <div class="w-full md:w-1/2 px-3">
@@ -79,26 +73,31 @@
                         </label>
                         <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="desa" name="desa" required>
                             <option value="">Pilih Desa</option>
-                            @foreach($regionData['desa'] as $desa)
-                                <option value="{{ $desa['id'] }}" {{ isset($ruasjalan['desa_id']) && $ruasjalan['desa_id'] == $desa['id'] ? 'selected' : '' }}>{{ $desa['desa'] }}</option>
-                            @endforeach
                         </select>
                     </div>
-                </div>
+                </div>               
                 <div class="flex flex-wrap -mx-3 mb-6">
-                    <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                    <div class="w-full md:w-1/2 px-3">
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="kode_ruas">
                             Kode Ruas
                         </label>
                         <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="kode_ruas" type="text" name="kode_ruas" value="{{ $ruasjalan['kode_ruas'] ?? '' }}" required>
                     </div>
-                    <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                    <div class="w-full md:w-1/2 px-3">
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="lebar">
                             Lebar Ruas
                         </label>
                         <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="lebar" type="text" name="lebar" value="{{ $ruasjalan['lebar'] ?? '' }}" required>
                     </div>
-                    <div class="w-full md:w-1/3 px-3">
+                </div>
+                <div class="flex flex-wrap -mx-3 mb-6">
+                    <div class="w-full md:w-1/2 px-3">
+                        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="panajng">
+                            Panjang
+                        </label>
+                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="Panjang" type="text" name="Panjang" value="{{ $ruasjalan['panjang'] ?? '' }}" required>
+                    </div>
+                    <div class="w-full md:w-1/2 px-3">
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="latlng">
                             Latlng
                         </label>
@@ -152,7 +151,7 @@
                     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                         Simpan
                     </button>
-                    <a class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" href="{{ route('RuasJalan.index') }}">
+                    <a class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" href="{{ route('RuasJalan.index') }}" onclick="window.location.href = getRedirectRoute(); return false;">
                         Kembali
                     </a>
                 </div>
@@ -223,9 +222,11 @@
             }).join(' ');
 
             document.getElementById('latlng').value = latlngString;
+            
 
             var length = calculateLength(latlngs);
             console.log('Length:', length);
+            document.getElementById('Panjang').value = length;
             Swal.fire({
                 title: 'Edit Berhasil!',
                 html: `Panjang Polyline yang dibuat: ${length.toFixed(2)} meter.`,
@@ -261,12 +262,59 @@
         drawnItems.addLayer(existingPolyline);   
         
         map.fitBounds(existingPolyline.getBounds());
+        
+        const regionData = @json($regionData);
+        const ruasjalan = @json($ruasjalan);
+
+        function populateSelect(selectId, data, placeholder, selectedId = null) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item[selectId];
+                if (selectedId && item.id == selectedId) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        function updateKabupaten() {
+            const provinceId = document.getElementById('province').value;
+            const kabupatenData = regionData.kabupaten.filter(kab => kab.prov_id == provinceId);
+            populateSelect('kabupaten', kabupatenData, 'Pilih Kabupaten', ruasjalan.kabupaten_id);
+            updateKecamatan();
+        }
+
+        function updateKecamatan() {
+            const kabupatenId = document.getElementById('kabupaten').value;
+            const kecamatanData = regionData.kecamatan.filter(kec => kec.kab_id == kabupatenId);
+            populateSelect('kecamatan', kecamatanData, 'Pilih Kecamatan', ruasjalan.kecamatan_id);
+            updateDesa();
+        }
+
+        function updateDesa() {
+            const kecamatanId = document.getElementById('kecamatan').value;
+            const desaData = regionData.desa.filter(desa => desa.kec_id == kecamatanId);
+            populateSelect('desa', desaData, 'Pilih Desa', ruasjalan.desa_id);
+        }
+
+        document.getElementById('province').addEventListener('change', updateKabupaten);
+        document.getElementById('kabupaten').addEventListener('change', updateKecamatan);
+        document.getElementById('kecamatan').addEventListener('change', updateDesa);
+
+        // Inisialisasi pilihan yang sudah ada
+        if (ruasjalan.province_id) {
+            document.getElementById('province').value = ruasjalan.province_id;
+            updateKabupaten();
+        }
 
         document.getElementById('form').addEventListener('submit', function(event) {
             event.preventDefault();
             const latlngInput = document.getElementById('latlng');
             const latlngValue = latlngInput ? latlngInput.value : '';
-            const panjangInput = document.getElementById('panjang');
+            const panjangInput = document.getElementById('Panjang');
             const panjangValue = panjangInput ? parseFloat(panjangInput.value) : null;
 
             const formData = {

@@ -162,6 +162,7 @@
                     <option value="semua">Tandai...</option>
                     <option value="jenis">Jenis</option>
                     <option value="kondisi">Kondisi</option>
+                    <option value="item">Filter Kategori</option>
                 </select>
                 <i class="fas fa-filter ml-2 text-gray-500"></i>
             </div>
@@ -197,6 +198,73 @@
             <div class="legend-item">
                 <input type="checkbox" id="kondisi-baik" value="baik">
                 <label for="kondisi-baik"><span class="color-box bg-green-500"></span>Baik</label>
+            </div>
+        </div>
+        <div id="item-legend">
+            <!-- Jenis -->
+            <div class="legend-item">
+                <input type="checkbox" id="item-provinsi" value="provinsi">
+                <label for="item-provinsi">Provinsi</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-kabupaten" value="kabupaten">
+                <label for="item-kabupaten">Kabupaten</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-desa" value="desa">
+                <label for="item-desa">Desa</label>
+            </div>
+            <hr class="border-t-4 border-gray-500 my-4">
+            <!-- eksisiting -->
+            <div class="legend-item">
+                <input type="checkbox" id="item-tanah" value="tanah">
+                <label for="item-tanah">Tanah</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-tanah-beton" value="tanah-beton">
+                <label for="item-tanah-beton">Tanah/Beton</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-perkerasan" value="perkerasan">
+                <label for="item-perkerasan">Perkerasan</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-koral" value="koral">
+                <label for="item-koral">Koral</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-lapen" value="lapen">
+                <label for="item-lapen">Lapen</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-paving" value="paving">
+                <label for="item-paving">Paving</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-hotmix" value="hotmix">
+                <label for="item-hotmix">Hotmix</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-beton" value="beton">
+                <label for="item-beton">Beton</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-beton-lapen" value="beton-lapen">
+                <label for="item-beton-lapen">Beton/Lapen</label>
+            </div>
+            <hr class="border-t-4 border-gray-500 my-4">
+            <!-- Kondisi -->
+            <div class="legend-item">
+                <input type="checkbox" id="item-rusak" value="rusak">
+                <label for="item-rusak">Rusak</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-sedang" value="sedang">
+                <label for="item-sedang">Sedang</label>
+            </div>
+            <div class="legend-item">
+                <input type="checkbox" id="item-baik" value="baik">
+                <label for="item-baik">Baik</label>
             </div>
         </div>
     </div>
@@ -243,7 +311,7 @@
 
                     const deletedRow = document.getElementById(`row-${id}`);
                     if (deletedRow) {
-                        deletedRow.remove(); // Hapus baris dari tabel
+                        deletedRow.remove(); 
                     }
 
                     // Tampilkan alert data berhasil dihapus
@@ -383,6 +451,22 @@
                             currentMarkers = [];
                         }
 
+                        const checkedItems = {
+                            jenis: [],
+                            eksisting: [],
+                            kondisi: []
+                        };
+                        if (filterType === 'item') {
+                            document.querySelectorAll('#item-legend input[type="checkbox"]:checked').forEach(checkbox => {
+                                if (['provinsi', 'kabupaten', 'desa'].includes(checkbox.value)) {
+                                    checkedItems.jenis.push(checkbox.value);
+                                } else if (['rusak', 'sedang', 'baik'].includes(checkbox.value)) {
+                                    checkedItems.kondisi.push(checkbox.value);
+                                } else {
+                                    checkedItems.eksisting.push(checkbox.value);
+                                }
+                            });
+                        }
                         polylineData.forEach(polyline => {
                             let shouldDraw = true;
 
@@ -411,6 +495,17 @@
                                             shouldDraw = document.getElementById('kondisi-rusak').checked;
                                             break;
                                     }
+                                }else if (filterType === 'item') {
+                                    shouldDraw = (
+                                        (checkedItems.jenis.length === 0 || 
+                                        (checkedItems.jenis.includes('provinsi') && polyline.jenisjalan_id === 3) ||
+                                        (checkedItems.jenis.includes('kabupaten') && polyline.jenisjalan_id === 2) ||
+                                        (checkedItems.jenis.includes('desa') && polyline.jenisjalan_id === 1)) &&
+                                        (checkedItems.eksisting.length === 0 || 
+                                        checkedItems.eksisting.includes(eksistingMap.get(polyline.eksisting_id).toLowerCase())) &&
+                                        (checkedItems.kondisi.length === 0 || 
+                                        checkedItems.kondisi.includes(kondisiMap.get(polyline.kondisi_id).toLowerCase()))
+                                    );
                                 }
                             }
 
@@ -592,9 +687,10 @@
                 document.getElementById('filter').addEventListener('change', event => {
                     const filterType = event.target.value;
                     const legendContainer = document.getElementById('legend-container');
-
+                    
                     document.getElementById('jenis-legend').style.display = 'none';
                     document.getElementById('kondisi-legend').style.display = 'none';
+                    document.getElementById('item-legend').style.display = 'none';
                     legendContainer.classList.remove('active');
 
                     if (filterType === 'jenis') {
@@ -602,6 +698,9 @@
                         legendContainer.classList.add('active');
                     } else if (filterType === 'kondisi') {
                         document.getElementById('kondisi-legend').style.display = 'block';
+                        legendContainer.classList.add('active');
+                    } else if (filterType === 'item') {
+                        document.getElementById('item-legend').style.display = 'block';
                         legendContainer.classList.add('active');
                     } else {
                         // Jika filter dikembalikan ke default, tampilkan semua polyline
@@ -624,6 +723,17 @@
 
                 // Panggil fungsi ini setelah DOM selesai dimuat
                 setupCheckboxListeners();
+
+                function setupItemCheckboxListeners() {
+                    const itemCheckboxes = document.querySelectorAll('#item-legend input[type="checkbox"]');
+                    itemCheckboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', () => {
+                            fetchPolylineData('item');
+                        });
+                    });
+                }
+
+                setupItemCheckboxListeners()
 
                 // Event listener for search button
                 document.getElementById('search-button').addEventListener('click', () => {

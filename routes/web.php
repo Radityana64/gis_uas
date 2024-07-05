@@ -48,11 +48,3 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth:api')->get('/ruasjalan', [RuasJalanController::class, 'index']);
-
-
-
-Route::get('/regions', [RegionController::class, 'getAllRegions']);
-Route::get('/province/{id}', [RegionController::class, 'getProvinceById']);
-Route::get('/kabupaten/province/{id}', [RegionController::class, 'getKabupatenByProvinceId']);
-Route::get('/kecamatan/kabupaten/{id}', [RegionController::class, 'getKecamatanByKabupatenId']);
-Route::get('/desa/kecamatan/{id}', [RegionController::class, 'getDesaByKecamatanId']);

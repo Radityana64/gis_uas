@@ -72,23 +72,31 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap -mx-3 mb-6">
-                    <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
-                        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="kode_ruas">
-                            Kode Ruas
-                        </label>
-                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="kode_ruas" type="text" name="kode_ruas" placeholder="Kode Ruas" required>
-                    </div>
-                    <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+                    <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="lebar">
                             Lebar Ruas
                         </label>
                         <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="lebar" type="text" name="lebar" placeholder="Lebar Ruas" required>
                     </div>
-                    <div class="w-full md:w-1/3 px-3">
+                    <div class="w-full md:w-1/2 px-3">
+                        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="kode_ruas">
+                            Kode Ruas
+                        </label>
+                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="kode_ruas" type="text" name="kode_ruas" placeholder="Kode Ruas" required>
+                    </div>
+                </div>
+                <div class="flex flex-wrap -mx-3 mb-6">
+                    <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+                        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="panjang">
+                            Panjang
+                        </label>
+                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="panjang" type="text" name="panjang" placeholder="Diisi Otomatis" required>
+                    </div>
+                    <div class="w-full md:w-1/2 px-3">
                         <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="latlng">
                             Latlng
                         </label>
-                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="latlng" type="text" name="latlng" placeholder="Latlng" required>
+                        <input class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="latlng" type="text" name="latlng" placeholder="Diisi Otomatis" required>
                     </div>
                 </div>
                 <div class="flex flex-wrap -mx-3 mb-6">
@@ -167,7 +175,7 @@
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(map);
 
-            var drawnItems = new L.FeatureGroup();
+            var drawnItems = new L.FeatureGroup({color: 'blue'});
             map.addLayer(drawnItems);
 
             var drawControl = new L.Control.Draw({
@@ -205,6 +213,7 @@
                 // Calculate the length of the polyline
                 var length = calculateLength(latlngs);
                 console.log('Length:', length);
+                document.getElementById('panjang').value = length;
 
                 Swal.fire({
                     title: 'Polyline Berhasil Ditambahkan',
@@ -235,6 +244,7 @@
                 // Calculate the length of the polyline
                 var length = calculateLength(latlngs);
                 console.log('Length:', length);
+                document.getElementById('panjang').value = length;
 
                 Swal.fire({
                     title: 'Edit Berhasil!',
